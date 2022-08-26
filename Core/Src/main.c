@@ -104,7 +104,7 @@ int main(void)
   // 0-6
   ret = xTaskCreate(AT_Client_Task, "AT_Client_Task", 256, NULL, 5, NULL);
   printf("AT_Client_Task  %d\r\n", ret);
-  ret = xTaskCreate(Ranqi_Tx_Task, "Ranqi_Tx_Task", 256, NULL, 3, NULL );
+  ret = xTaskCreate(Ranqi_Tx_Task, "Ranqi_Tx_Task", 512, NULL, 3, NULL );
   printf("Ranqi_Tx_Task  %d\r\n", ret);
   ret = xTaskCreate(Ranqi_Rx_Task, "Ranqi_Rx_Task", 256, NULL, 4, NULL );
   printf("Ranqi_Rx_Task  %d\r\n", ret);

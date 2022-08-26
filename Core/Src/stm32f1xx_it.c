@@ -61,7 +61,8 @@ extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
-
+extern uint32_t board_1s_tick;
+extern uint32_t board_1m_tick;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -186,7 +187,10 @@ void TIM3_IRQHandler(void)
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
-
+  board_1s_tick++;
+  if(board_1s_tick % 60 == 0) {
+	  board_1m_tick++;
+  }
   /* USER CODE END TIM3_IRQn 1 */
 }
 

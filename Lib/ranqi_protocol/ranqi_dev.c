@@ -945,11 +945,32 @@ extern void ranqi_tick_test(void);
 QueueHandle_t Ranqi_Rx_Queue;
 static Ranqi_xMessage_s ranqi_rx_msg;
 
+
+static void Ranqi_Sample_Report_Process(void)
+{
+	static uint32_t last_sample_time = 0xFFFFFFFF;
+	static uint32_t last_report_time = 0xFFFFFFFF;
+	uint32_t curr_time = board_1s_tick_get();
+	if((curr_time != last_sample_time) &&
+	   (curr_time >= (last_sample_time + ranqi_dev.sample_interval))) {
+		printf("Sampling data\r\n");
+		last_sample_time = curr_time;
+		board_led_toggle(BOARD_LED_SYS);
+		board_led_toggle(BOARD_LED_ALM);
+	}
+
+	if((curr_time != last_report_time) &&
+	   (curr_time >= (last_report_time + ranqi_dev.report_interval))) {
+		printf("Report data......\r\n");
+		last_report_time = curr_time;
+	}
+}
+
 void Ranqi_Tx_Task( void *pvParameters )
 {
 	ranqi_dev_init();
 	if(at_device_init() != AT_SYS_RET_SUCCESS) {
-		printf("Ranqi_Task failed, Exit Task");
+		printf("Ranqi_Task failed, Exit Task\r\n");
 		return;
 	}
 
@@ -958,10 +979,8 @@ void Ranqi_Tx_Task( void *pvParameters )
     {
     	atDevice_ctwing_connect(ranqi_dev.server_ip, ranqi_dev.server_port);
 
-
-        printf( "Ranqi_Tx_Task output ........\r\n" );
-        /* 延迟，以产生一个周期 */
-        osDelay(2000);
+    	Ranqi_Sample_Report_Process();
+        osDelay(1000);
     }
 }
 
@@ -978,32 +997,3 @@ void Ranqi_Rx_Task( void *pvParameters )
     }
 }
 
-
-#if 0
-void Ranqi_Task(void const * argument)
-{
-    at_device_init();
-    ranqi_dev_init();
-
-    while(1) {
-        if(!check_at_network()) {
-            osDelay(3000);
-            continue;
-        } else {
-            break;
-        }
-    }
-    
-    printf("Ranqi_Task starting...\r\n");
-    regester_ctwing_server();
-
-    for(;;) {
-
-
-        atgm332d_parse_gps_buffer();
-        ranqi_tick_test();
-        osDelay(1000);
-    }
-}
-
-#endif
