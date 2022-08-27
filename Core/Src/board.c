@@ -11,6 +11,7 @@
 #include "board.h"
 
 
+uint8_t unix_tick_set = 0;
 uint32_t board_1s_tick = 0;
 uint32_t board_1m_tick = 0;
 
@@ -24,6 +25,16 @@ static StaticQueue_t xStaticQueue;
 uint8_t ucQueueStorageArea[ RANQI_QUEUE_DEPTH * sizeof(Ranqi_xMessage_s) ];
 
 extern void atClient_RxCpltCallback(UART_HandleTypeDef *huart);
+extern void gps_RxCpltCallback(UART_HandleTypeDef *huart);
+
+void board_DelayUs(int32_t udelay)
+{
+  __IO uint32_t Delay = udelay * 72 / 8;
+  do {
+	  __NOP();
+  } while(Delay--);
+}
+
 
 void mem_info(void)
 {
@@ -35,10 +46,36 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	if (huart == &huart1) {
 		atClient_RxCpltCallback(huart);
 	} else if (huart == &huart2) {
-//		gps_RxCpltCallback(huart);
+		gps_RxCpltCallback(huart);
 	} else {
 
 	}
+}
+
+void board_set_date_time(ds_time_s *utc_date)
+{
+	ds_time_s beijing_date;
+	if(unix_tick_set) return;
+
+	time_UTC_to_Beijing(utc_date, &beijing_date);
+
+	printf("board_set_date_time: 20%02d-%02d-%02d %02d:%02d:%02d\r\n",
+			beijing_date.year, beijing_date.month, beijing_date.day, beijing_date.hour, beijing_date.min, beijing_date.sec);
+	DS1302_SetTime(&beijing_date);
+
+	memset(&beijing_date, 0, sizeof(beijing_date));
+	DS1302_GetTime(&beijing_date);
+	printf("READBACK:  board_set_date_time: 20%02d-%02d-%02d %02d:%02d:%02d\r\n",
+			beijing_date.year, beijing_date.month, beijing_date.day, beijing_date.hour, beijing_date.min, beijing_date.sec);
+}
+
+void board_set_unix_tick(uint32_t unix_tick)
+{
+	printf("board_set_unix_time: %d\r\n", unix_tick);
+	DS1302_Write_Unix_Tick(unix_tick);
+	printf("READBACK:  board_set_unix_time: %d\r\n", DS1302_Read_Unix_Tick());
+
+	unix_tick_set = 1;
 }
 
 void board_init(void)
@@ -55,9 +92,9 @@ void board_init(void)
 
     mem_info();
     DS1302_Init();
-//    W25qxx_Init();    // SPI flash
-//    L3G4200D_Init();  // g-sensor
-//    atgm332d_init();  // GPS module
+    W25qxx_Init();
+    L3G4200D_Init();  // g-sensor
+    atgm332d_init();  // GPS module
 }
 
 void board_led_on(board_led_e led)

@@ -1,28 +1,9 @@
 #include "include/at_device.h"
 #include "ranqi_protocol.h"
+#include "ds1302.h"
 
 extern uint32_t ranqi_dev_get_up_msg_id(void);
-
-/***************************************************************/
-/*                      Sensor Driver API                      */
-/***************************************************************/
-static float read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e type)
-{
-    switch (loc) {
-        case Ranqi_Sensor_Loc_Low:
-            break;
-
-        case Ranqi_Sensor_Loc_Mid:
-            // TODO
-            break;
-
-        case Ranqi_Sensor_Loc_High:
-            break;
-        default:
-            break;
-    }
-    return 1.25;
-}
+extern float ranqi_read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e type);
 
 /***************************************************************/
 /*                      Up Normal Message                      */
@@ -70,7 +51,7 @@ void build_seg(ranqi_seg_s *p_seg, uint8_t port, uint8_t loc, sensor_type_e type
 {
    p_seg->type   = type;
    p_seg->loc    = (uint8_t)((port << 4) | loc);
-   p_seg->value  = read_sensor_data(port, loc, type);
+   p_seg->value  = ranqi_read_sensor_data(port, loc, type);
 }
 
 void build_groups(uint8_t *buff)
@@ -87,7 +68,7 @@ void build_groups(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Time();
+    p_grp->ts = DS1302_Read_Unix_Tick();
     p_grp++;
 
     // group 2
@@ -100,7 +81,7 @@ void build_groups(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Time();
+    p_grp->ts = DS1302_Read_Unix_Tick();
     p_grp++;
 
     // group 3
@@ -113,7 +94,7 @@ void build_groups(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_TEMP);
 #endif   
-    p_grp->ts = DS1302_Read_Unix_Time();
+    p_grp->ts = DS1302_Read_Unix_Tick();
 }
 
 uint32_t build_up_normal_msg(uint8_t *buff)
@@ -186,7 +167,7 @@ uint32_t build_up_more_msg(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Time();
+    p_grp->ts = DS1302_Read_Unix_Tick();
     len += sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
@@ -284,7 +265,7 @@ uint32_t build_up_alarm_msg(uint8_t *buff, uint8_t *alm_info, uint32_t alm_len)
     len = len + alm_len;
 
     msg_tail = (ranqi_up_msg_ts_tail_s *)(buff + len);
-    msg_tail->ts = DS1302_Read_Unix_Time();
+    msg_tail->ts = DS1302_Read_Unix_Tick();
     msg_tail->checksum = utils_checksum(buff, len + 4);
     msg_tail->fofo = 0xFF;
 
@@ -329,7 +310,7 @@ uint32_t build_up_manual_msg(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Time();
+    p_grp->ts = DS1302_Read_Unix_Tick();
     len += sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);

@@ -45,10 +45,6 @@ X定义如下：
 单口产品： X为0
 */
 
-// SERVER information
-#define Ranqi_Default_Server_Ip       0xDDE5D6CA  // 221.229.214.202
-#define Ranqi_Default_Server_Port     5683
-
 // Device Information
 #define Ranqi_Dev_Hw_Ver              "01"
 #define Ranqi_Dev_Sw_Ver              "01"
@@ -72,12 +68,52 @@ X定义如下：
 
 #define DEFAULT_SAMPLE_INTERVAL        5
 #define DEFAULT_REPORT_INTERVAL        60
+#define DEFAULT_ALARM_TOLERANCE        3
+#define DEFAULT_FILTER_COEF            1
+#define DEFAULT_SERVER_IP              0xDDE5D6CA  // 221.229.214.202
+#define DEFAULT_SERVER_PORT            5683
+
 
 typedef struct {
     int16_t x;
     int16_t y;
     int16_t z;
 } tilt_angle_s;
+
+#define PRESS_OVER_UP_LIMIT_FLAG     (1 << 0)
+#define PRESS_OVER_DN_LIMIT_FLAG     (1 << 1)
+#define PRESS_UNDER_UP_LIMIT_FLAG    (1 << 2)
+#define PRESS_UNDER_DN_LIMIT_FLAG    (1 << 3)
+#define PRESS_FLAG_MASK              (PRESS_OVER_UP_LIMIT_FLAG | PRESS_OVER_DN_LIMIT_FLAG | \
+		                              PRESS_UNDER_UP_LIMIT_FLAG | PRESS_UNDER_DN_LIMIT_FLAG)
+
+#define TEMP_UP_LIMIT_FLAG           (1 << 0)
+#define TEMP_DN_LIMIT_FLAG           (1 << 1)
+#define TEMP_FLAG_MASK              (TEMP_UP_LIMIT_FLAG | TEMP_DN_LIMIT_FLAG)
+
+typedef struct {
+	uint8_t flag;
+	float   over_up_limit;
+	float   over_dn_limit;
+	float   under_up_limit;
+	float   under_dn_limit;
+} press_limit_s;
+
+typedef struct {
+	uint8_t flag;
+	float   up_limit;
+	float   dn_limit;
+} temp_limit_s;
+
+typedef struct {
+#if PRODUCT_PORTS == 2
+    float press_data[3][2];     // loc, port
+    float  temp_data[3][2];     // loc, port
+#else
+    float press_data[3][1];     // loc, port
+    float  temp_data[3][1];     // loc, port
+#endif
+} sensor_data_s;
 
 typedef struct {
     uint8_t device_port;        // 1 or 2 ports
@@ -90,29 +126,35 @@ typedef struct {
     tilt_angle_s  init_tilt_angle;
 
     // System parameters related
-    uint8_t  alarm_tolerance;
-    uint8_t  filter_coef;
+    uint8_t  alarm_tolerance;       // 3 次; 连续3次超过报警阈值时，每次20s
+    uint8_t  filter_coef;           // 1;   多次采集数据，取平均值上报，该次数为滤波系数
     uint8_t  report_start_limit;
     uint8_t  report_start_kuang;
 
     // Alarm parameters related
 #if PRODUCT_PORTS == 2
-    float   over_press_dn_limit[3][2];  // loc, port
-    float   over_press_up_limit[3][2];  // loc, port
-    float   under_press_up_limit[3][2]; // loc, port
-    float   under_press_dn_limit[3][2]; // loc, port
-    float   temp_dn_limit[3][2];        // loc, port
-    float   temp_up_limit[3][2];        // loc, port
+    press_limit_s press_limit[3][2];    // loc, port
+    temp_limit_s  temp_limit[3][2];     // loc, port
+
+//    float   over_press_dn_limit[3][2];  // loc, port
+//    float   over_press_up_limit[3][2];  // loc, port
+//    float   under_press_up_limit[3][2]; // loc, port
+//    float   under_press_dn_limit[3][2]; // loc, port
+//    float   temp_dn_limit[3][2];        // loc, port
+//    float   temp_up_limit[3][2];        // loc, port
 
     float   zero_shift_adjust[3][2][2]; // loc, type, port
     float   xie_shift_adjust[3][2][2];  // loc, type, port
 #else
-    float   over_press_up_limit[3][1];  // loc, port
-    float   over_press_dn_limit[3][1];  // loc, port
-    float   under_press_up_limit[3][1]; // loc, port
-    float   under_press_dn_limit[3][1];  // loc, port
-    float   temp_dn_limit[3][1];         // loc, port   >= -20°
-    float   temp_up_limit[3][1];         // loc, port   <= 60°
+    press_limit_s press_limit[3][1]; // loc, port
+    temp_limit_s  temp_limit[3][1];     // loc, port
+
+//    float   over_press_up_limit[3][1];  // loc, port
+//    float   over_press_dn_limit[3][1];  // loc, port
+//    float   under_press_up_limit[3][1]; // loc, port
+//    float   under_press_dn_limit[3][1];  // loc, port
+//    float   temp_dn_limit[3][1];         // loc, port   >= -20°
+//    float   temp_up_limit[3][1];         // loc, port   <= 60°
 
     float   zero_shift_adjust[3][2][1];  // loc, type, port
     float   xie_shift_adjust[3][2][1];   // loc, type, port
@@ -120,10 +162,6 @@ typedef struct {
     uint16_t battry_low_limit;
     float   tilt_limit;       // 一个位置， 采样点： 0x03  <= 65°
     float   crash_acc_limit;  // 一个位置， 采样点： 0x06
-
-
-    uint32_t alarm_win;         // 3 次; 连续3次超过报警阈值时，每次20s
-    uint32_t filter_num;        // 1;   多次采集数据，取平均值上报，该次数为滤波系数
 
     uint32_t ts;                // 采集时间对其到00秒
     uint32_t up_pkg_id;        // 0x00000000 ~ 0x7FFFFFFF

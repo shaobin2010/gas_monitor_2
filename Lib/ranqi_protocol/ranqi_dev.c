@@ -14,10 +14,11 @@
 
 #include "main.h"
 
-#define TX_FRAME_BUF_LEN   15
+#define TX_FRAME_BUF_LEN   320
 
 static ranqi_device_s ranqi_dev;
 static uint8_t tx_frame_buffer[TX_FRAME_BUF_LEN];
+static uint8_t ranqi_tx_buff[TX_FRAME_BUF_LEN];
 
 /************************************************************************/
 /*                     Send Normal Frame                               */
@@ -32,6 +33,23 @@ uint32_t ranqi_dev_get_up_msg_id(void)
     }
 
     return val;
+}
+
+static void ranqi_send_normal_msg(void)
+{
+    uint32_t msg_len;
+
+    msg_len = build_up_normal_msg(ranqi_tx_buff);
+    ctwing_send_data(0, ranqi_tx_buff, msg_len);
+}
+
+
+static void ranqi_send_alarm_msg(uint8_t *alm_info, uint32_t alm_len)
+{
+    uint32_t msg_len;
+
+    msg_len = build_up_alarm_msg(ranqi_tx_buff, alm_info, alm_len);
+    ctwing_send_data(0, ranqi_tx_buff, msg_len);
 }
 
 /************************************************************************/
@@ -325,7 +343,7 @@ static void Report_Over_Press_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t po
 
     action.name = port ? MSG_REPORT_Input_Over_Press_uplimit : MSG_REPORT_Output_Over_Press_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.over_press_up_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].over_up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -338,7 +356,7 @@ static void Report_Over_Press_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t po
 
     action.name = port ? MSG_REPORT_Input_Over_Press_dnlimit : MSG_REPORT_Output_Over_Press_dnlimit;
     action.size = 4;
-    action.limit = ranqi_dev.over_press_dn_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].over_dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -351,7 +369,7 @@ static void Report_Under_Press_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t p
 
     action.name = port ? MSG_REPORT_Input_Under_Press_uplimit : MSG_REPORT_Output_Under_Press_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.under_press_up_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].under_up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -364,7 +382,7 @@ static void Report_Under_Press_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t p
 
     action.name = port ? MSG_REPORT_Input_Under_Press_dnlimit : MSG_REPORT_Output_Under_Press_dnlimit; 
     action.size = 4;
-    action.limit = ranqi_dev.under_press_dn_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].under_dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -379,7 +397,7 @@ static void Report_Temp_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t pos)
 
     action.name = port ? MSG_REPORT_Input_Temp_uplimit : MSG_REPORT_Output_Temp_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.temp_up_limit[pos][port];
+    action.limit = ranqi_dev.temp_limit[pos][port].up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -392,7 +410,7 @@ static void Report_Temp_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t pos)
 
     action.name = port ? MSG_REPORT_Input_Temp_dnlimit : MSG_REPORT_Output_Temp_dnlimit; 
     action.size = 4;
-    action.limit = ranqi_dev.temp_dn_limit[pos][port];
+    action.limit = ranqi_dev.temp_limit[pos][port].dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -407,7 +425,7 @@ static void Report_Over_Press_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t po
 
     action.name = MSG_REPORT_Over_Press_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.over_press_up_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].over_up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -420,7 +438,7 @@ static void Report_Over_Press_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t po
 
     action.name = MSG_REPORT_Over_Press_dnlimit; 
     action.size = 4;
-    action.limit = ranqi_dev.over_press_dn_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].over_dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -433,7 +451,7 @@ static void Report_Under_Press_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t p
 
     action.name = MSG_REPORT_Under_Press_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.under_press_up_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].under_up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -446,7 +464,7 @@ static void Report_Under_Press_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t p
 
     action.name = MSG_REPORT_Under_Press_dnlimit; 
     action.size = 4;
-    action.limit = ranqi_dev.under_press_dn_limit[pos][port];
+    action.limit = ranqi_dev.press_limit[pos][port].under_dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -459,7 +477,7 @@ static void Report_Temp_Up_Limit(uint32_t msg_id, uint8_t port, uint8_t pos)
 
     action.name = MSG_REPORT_Temp_uplimit; 
     action.size = 4;
-    action.limit = ranqi_dev.temp_up_limit[pos][port];
+    action.limit = ranqi_dev.temp_limit[pos][port].up_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -473,7 +491,7 @@ static void Report_Temp_Dn_Limit(uint32_t msg_id, uint8_t port, uint8_t pos)
     
     action.name = MSG_REPORT_Temp_dnlimit; 
     action.size = 4;
-    action.limit = ranqi_dev.temp_dn_limit[pos][port];
+    action.limit = ranqi_dev.temp_limit[pos][port].dn_limit;
 
     msg_len = build_up_feedback_msg(tx_frame_buffer, msg_id, (uint8_t *)&action, sizeof(action));
     ctwing_send_data(0, tx_frame_buffer, msg_len);
@@ -533,8 +551,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-
-            ranqi_dev.under_press_up_limit[pos][port] = settings->limit;
+            ranqi_dev.press_limit[pos][port].flag |= PRESS_UNDER_UP_LIMIT_FLAG;
+            ranqi_dev.press_limit[pos][port].under_up_limit = settings->limit;
             break;
 
         case ALM_OBJ_UNDER_PRESS_DN_LIMIT:
@@ -542,7 +560,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-            ranqi_dev.under_press_dn_limit[pos][port] = settings->limit;
+            ranqi_dev.press_limit[pos][port].flag |= PRESS_UNDER_DN_LIMIT_FLAG;
+            ranqi_dev.press_limit[pos][port].under_dn_limit = settings->limit;
             break;
 
         case ALM_OBJ_OVER_PRESS_DN_LIMIT:
@@ -550,7 +569,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-            ranqi_dev.over_press_dn_limit[pos][port] = settings->limit;
+            ranqi_dev.press_limit[pos][port].flag |= PRESS_OVER_DN_LIMIT_FLAG;
+            ranqi_dev.press_limit[pos][port].over_dn_limit = settings->limit;
             break;
 
         case ALM_OBJ_OVER_PRESS_UP_LIMIT:
@@ -558,8 +578,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-            ranqi_dev.over_press_up_limit[pos][port] = settings->limit;
-
+            ranqi_dev.press_limit[pos][port].flag |= PRESS_OVER_UP_LIMIT_FLAG;
+            ranqi_dev.press_limit[pos][port].over_up_limit = settings->limit;
             break;
 
         case ALM_OBJ_TEMP_DN_LIMIT:
@@ -567,8 +587,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-            ranqi_dev.temp_dn_limit[pos][port] = settings->limit;
-
+            ranqi_dev.temp_limit[pos][port].flag = TEMP_DN_LIMIT_FLAG;
+            ranqi_dev.temp_limit[pos][port].dn_limit = settings->limit;
             break;
 
         case ALM_OBJ_TEMP_UP_LIMIT:
@@ -576,8 +596,8 @@ static bool dn_alaram_settings_handler(alarm_setting_s *settings)
                  (pos > Ranqi_Sensor_Loc_Num) ) {
                 return false;
             }
-            ranqi_dev.temp_up_limit[pos][port] = settings->limit;
-
+            ranqi_dev.temp_limit[pos][port].flag = TEMP_UP_LIMIT_FLAG;
+            ranqi_dev.temp_limit[pos][port].up_limit = settings->limit;
             break;
 
         case ALM_OBJ_TILT_ANGLE:
@@ -649,7 +669,7 @@ static bool dn_set_interval_handler(set_interval_s *settings)
 
 static bool dn_set_time_handler(uint32_t ts)
 {
-    DS1302_Write_Unix_Time(ts);
+	board_set_unix_tick(ts);
     return true;
 }
 
@@ -930,10 +950,12 @@ void ranqi_dev_init(void)
 {
     memset(&ranqi_dev, 0, sizeof(ranqi_dev));
     ranqi_dev.device_port = PRODUCT_PORTS;
-    ranqi_dev.server_ip = Ranqi_Default_Server_Ip;
-    ranqi_dev.server_port = Ranqi_Default_Server_Port;
+    ranqi_dev.server_ip   = DEFAULT_SERVER_IP;
+    ranqi_dev.server_port = DEFAULT_SERVER_PORT;
     ranqi_dev.sample_interval = DEFAULT_SAMPLE_INTERVAL;
     ranqi_dev.report_interval = DEFAULT_REPORT_INTERVAL;
+    ranqi_dev.alarm_tolerance = DEFAULT_ALARM_TOLERANCE;
+    ranqi_dev.filter_coef     = DEFAULT_FILTER_COEF;
 }
 
 #include "include/at_device.h"
@@ -945,24 +967,146 @@ extern void ranqi_tick_test(void);
 QueueHandle_t Ranqi_Rx_Queue;
 static Ranqi_xMessage_s ranqi_rx_msg;
 
+/***************************************************************/
+/*                      Sensor Driver API                      */
+/***************************************************************/
+float ranqi_read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e type)
+{
+    switch (loc) {
+        case Ranqi_Sensor_Loc_Low:
+            break;
+
+        case Ranqi_Sensor_Loc_Mid:
+            // TODO
+            break;
+
+        case Ranqi_Sensor_Loc_High:
+            break;
+
+        default:
+            break;
+    }
+    return 1.25;
+}
+
+static uint8_t sensor_data_alarm_check(float data, uint8_t port, uint8_t loc, sensor_type_e type)
+{
+	switch (type) {
+		case SENSOR_PRESS:
+			if(ranqi_dev.press_limit[loc][port].flag != PRESS_FLAG_MASK){
+				// 没有设置合适的报警门限
+				return ALM_None;
+			}
+
+			if(data >= ranqi_dev.press_limit[loc][port].over_up_limit) {
+				// 超压上限报警
+				return ALM_Over_Press_Up;
+			} else if (data >= ranqi_dev.press_limit[loc][port].over_dn_limit) {
+				// 超压下限报警
+				return ALM_Over_Press_Dn;
+			} else if (data > ranqi_dev.press_limit[loc][port].under_up_limit) {
+				// 正常
+				return ALM_None;
+			} else if (data > ranqi_dev.press_limit[loc][port].under_dn_limit) {
+				// 欠压上限报警
+				return ALM_Under_Press_Up;
+			} else {
+				// 欠压下限报警
+				return ALM_Under_Press_Dn;
+			}
+			break;
+
+		case SENSOR_TEMP:
+			if(ranqi_dev.temp_limit[loc][port].flag != TEMP_FLAG_MASK){
+				// 没有设置合适的报警门限
+				return ALM_None;
+			}
+			if(data > ranqi_dev.temp_limit[loc][port].up_limit) {
+				// 温度上限报警
+				return ALM_Temp_Up;
+			} else if (data < ranqi_dev.temp_limit[loc][port].dn_limit) {
+				// 温度下限报警
+				return ALM_Temp_Dn;
+			} else {
+				// 正常
+				return ALM_None;
+			}
+			break;
+
+		default:
+			return ALM_None;
+	}
+}
+
+static void sample_sensor_data(void)
+{
+	float data;
+	uint8_t alm_ret;
+
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
+	alm_ret = sensor_data_alarm_check(data, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
+
+
+	// check thresh
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS);
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
+
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+	// check thresh
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP);
+	data = read_sensor_data(Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_TEMP);
+
+#if PRODUCT_PORTS == 2
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
+	// check thresh
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS);
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
+
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+	// check thresh
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP);
+	data = read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_TEMP);
+#endif
+}
 
 static void Ranqi_Sample_Report_Process(void)
 {
 	static uint32_t last_sample_time = 0xFFFFFFFF;
 	static uint32_t last_report_time = 0xFFFFFFFF;
 	uint32_t curr_time = board_1s_tick_get();
+
+
 	if((curr_time != last_sample_time) &&
 	   (curr_time >= (last_sample_time + ranqi_dev.sample_interval))) {
+
+		// Sample sensor data
 		printf("Sampling data\r\n");
-		last_sample_time = curr_time;
 		board_led_toggle(BOARD_LED_SYS);
 		board_led_toggle(BOARD_LED_ALM);
+
+		last_sample_time = curr_time;
 	}
 
 	if((curr_time != last_report_time) &&
 	   (curr_time >= (last_report_time + ranqi_dev.report_interval))) {
+
 		printf("Report data......\r\n");
+		ranqi_send_normal_msg();
 		last_report_time = curr_time;
+	}
+}
+
+static void check_gps_info(void)
+{
+	static bool is_date_time_set = false;
+	ds_time_s utc_date;
+
+	atgm332d_parse_gps_buffer();
+	if(!is_date_time_set) {
+		if(atgm332d_get_date_time(&utc_date)) {
+			board_set_date_time(&utc_date);
+			is_date_time_set = true;
+		}
 	}
 }
 
@@ -980,6 +1124,8 @@ void Ranqi_Tx_Task( void *pvParameters )
     	atDevice_ctwing_connect(ranqi_dev.server_ip, ranqi_dev.server_port);
 
     	Ranqi_Sample_Report_Process();
+    	check_gps_info();
+
         osDelay(1000);
     }
 }

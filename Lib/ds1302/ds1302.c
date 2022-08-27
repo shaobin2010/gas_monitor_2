@@ -188,16 +188,16 @@ void DS1302_GetTime(ds_time_s *time)
 	time->sec = ((value&0x70)>>4)*10 + (value&0x0f);
 }
 
-void DS1302_SetTime(uint8_t yr, uint8_t mon, uint8_t date, uint8_t hr, uint8_t min, uint8_t sec)
+void DS1302_SetTime(ds_time_s *time)
 {
 	DS1302_WriteReg(CONTROL, 0x00);
 	DS1302_WriteReg(SEC, 0x80);
-	DS1302_WriteReg(YEAR, ((yr/10)<<4)|(yr%10));
-	DS1302_WriteReg(MONTH, ((mon/10)<<4)|(mon%10));
-	DS1302_WriteReg(DATE, ((date/10)<<4)|(date%10));
-	DS1302_WriteReg(HR, ((hr/10)<<4)|(hr%10));
-	DS1302_WriteReg(MIN, ((min/10)<<4)|(min%10));
-	DS1302_WriteReg(SEC, ((sec/10)<<4)|(sec%10));
+	DS1302_WriteReg(YEAR, ((time->year/10)<<4)|(time->year%10));
+	DS1302_WriteReg(MONTH, ((time->month/10)<<4)|(time->month%10));
+	DS1302_WriteReg(DATE, ((time->day/10)<<4)|(time->day%10));
+	DS1302_WriteReg(HR, ((time->hour/10)<<4)|(time->hour%10));
+	DS1302_WriteReg(MIN, ((time->min/10)<<4)|(time->min%10));
+	DS1302_WriteReg(SEC, ((time->sec/10)<<4)|(time->sec%10));
 	DS1302_WriteReg(CONTROL, 0x80);
 }
 
@@ -206,7 +206,7 @@ void DS1302_SetTime(uint8_t yr, uint8_t mon, uint8_t date, uint8_t hr, uint8_t m
 #define xDAY      (24*xHOUR)     // 1天的秒数
 #define xYEAR     (365*xDAY)     // 1年的秒数
 
-void unix_to_UTC(uint32_t unix_time, ds_time_s *utc_time)
+void tick_to_time(uint32_t unix_time, ds_time_s *utc_time)
 {
     uint32_t monthes[12]={
         /*01月*/31,
@@ -227,7 +227,6 @@ void unix_to_UTC(uint32_t unix_time, ds_time_s *utc_time)
     utc_time->sec = unix_time%60;   // 获得秒
     unix_time /= 60;
     utc_time->min = unix_time%60;    // 获得分
-    unix_time += 8*60 ;             // 时区矫正 转为UTC+8 bylzs
     unix_time /= 60;
     utc_time->hour = unix_time % 24;   // 获得时
     days = unix_time/24;            // 获得总天数
@@ -267,8 +266,7 @@ void unix_to_UTC(uint32_t unix_time, ds_time_s *utc_time)
     utc_time->day = days;           //获得日
 }
 
-
-void UTC_to_unix(ds_time_s utc_time, uint32_t *unix_time)
+uint32_t time_to_tick(ds_time_s *utc_time)
 {
     uint32_t monthes[12]={
             xDAY*(0),                                           /*01月*/
@@ -287,36 +285,57 @@ void UTC_to_unix(ds_time_s utc_time, uint32_t *unix_time)
 
   uint32_t seconds = 0;
   uint32_t year = 0;
-  
-  year = (utc_time.year + 2000) - 1970;
-  seconds = xYEAR*year + xDAY*((year+1)/4);           // 前几年过去的秒数
-  seconds += monthes[utc_time.month - 1];             // 加上今年本月过去的秒数
 
-  if( (utc_time.month > 2) && (((year + 2)%4)==0) )   // 2008年为闰年
+  year = (utc_time->year + 2000) - 1970;
+  seconds = xYEAR*year + xDAY*((year+1)/4);           // 前几年过去的秒数
+  seconds += monthes[utc_time->month - 1];             // 加上今年本月过去的秒数
+
+  if( (utc_time->month > 2) && (((year + 2)%4)==0) )   // 2008年为闰年
     seconds += xDAY;                                  // 闰年加1天秒数
 
-  seconds += xDAY*(utc_time.day - 1);                 // 加上本月过去天的秒数
-  seconds += xHOUR*utc_time.hour;                     // 加上本天过去小时的秒数
-  seconds += xMINUTE*utc_time.min;                    // 加上本小时过去分钟的秒数
-  seconds += utc_time.sec;                            // 加上当前秒数
-  *unix_time = seconds - xHOUR*8;                     // 调整时区， -8小时
+  seconds += xDAY*(utc_time->day - 1);                 // 加上本月过去天的秒数
+  seconds += xHOUR*utc_time->hour;                     // 加上本天过去小时的秒数
+  seconds += xMINUTE*utc_time->min;                    // 加上本小时过去分钟的秒数
+  seconds += utc_time->sec;                            // 加上当前秒数
+
+  return seconds;
 }
 
-
-uint32_t DS1302_Read_Unix_Time(void)
+uint32_t tick_Unix_to_Beijing(uint32_t unix_tick)
 {
-  ds_time_s utc_time;
-  uint32_t unix_time;
-
-  DS1302_GetTime(&utc_time);
-  UTC_to_unix(utc_time, &unix_time);
-  return unix_time;
+	return unix_tick + 8*xHOUR;
 }
 
-void DS1302_Write_Unix_Time(uint32_t unix_time)
+uint32_t tick_Beijing_to_Unix(uint32_t beijing_tick)
 {
-  ds_time_s utc_time;
+	return beijing_tick - 8*xHOUR;
+}
 
-  unix_to_UTC(unix_time, &utc_time);
-  DS1302_SetTime(utc_time.year, utc_time.month, utc_time.day, utc_time.hour, utc_time.min, utc_time.sec);
+void time_UTC_to_Beijing(ds_time_s *utc_time, ds_time_s *beijing_time)
+{
+	uint32_t utc_tick = time_to_tick(utc_time);
+	tick_to_time(tick_Unix_to_Beijing(utc_tick), beijing_time);
+}
+
+void time_Beijing_to_UTC(ds_time_s *beijing_time, ds_time_s *utc_time)
+{
+	uint32_t beijing_tick = time_to_tick(beijing_time);
+	tick_to_time(tick_Beijing_to_Unix(beijing_tick), utc_time);
+}
+
+uint32_t DS1302_Read_Unix_Tick(void)
+{
+  ds_time_s beijing_time;
+  DS1302_GetTime(&beijing_time);
+
+  return tick_Beijing_to_Unix(time_to_tick(&beijing_time));
+}
+
+void DS1302_Write_Unix_Tick(uint32_t unix_time)
+{
+  ds_time_s beijing_time;
+  uint32_t beijing_tick = tick_Unix_to_Beijing(unix_time);
+
+  tick_to_time(beijing_tick, &beijing_time);
+  DS1302_SetTime(&beijing_time);
 }

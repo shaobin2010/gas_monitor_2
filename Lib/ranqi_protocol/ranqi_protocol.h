@@ -101,7 +101,7 @@ typedef enum {
     ALM_Over_Press_Dn       = 0xf0,        // 超压下限报警
     ALM_Over_Press_Up       = 0xf2,        // 超压上限报警
     ALM_Temp_Dn             = 0x01,        // 温度下限报警
-    ALM_Temp_Un             = 0xf1,        // 温度上限报警
+    ALM_Temp_Up             = 0xf1,        // 温度上限报警
     ALM_Under_Press_Up_Clr  = 0x10,        // 欠压上限报警解除
     ALM_Under_Press_Dn_Clr  = 0x12,        // 欠压下限报警解除
     ALM_Over_Press_Dn_Clr   = 0xE0,        // 超压下限报警解除
@@ -112,6 +112,7 @@ typedef enum {
     ALM_Tilt                = 0x05,        // 倾斜报警
     ALM_Crash_Acc           = 0x06,        // 撞击报警
 
+	ALM_None                = 0xFF,
 } ranqi_alarm_type_e;
 
 
