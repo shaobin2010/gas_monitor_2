@@ -6,6 +6,9 @@
 extern "C" {
 #endif
 
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 #include "include/hal_export.h"
 #include "include/at_export_error.h"
 #include "include/config.h"
@@ -33,6 +36,7 @@ typedef struct {
     char ICCID[ICCID_LEN+1];
 } at_device_s;
 
+extern SemaphoreHandle_t ctwing_Lock_Mutex;
 at_system_error_e at_device_init(void);
 
 extern at_system_error_e module_get_imei(char *imei);
@@ -49,6 +53,14 @@ extern void atDevice_ctwing_connect(uint32_t server_ip, uint16_t server_port);
 extern at_system_error_e ctwing_setup_server(uint32_t ip, uint16_t port);
 extern at_system_error_e ctwing_reg_server(void);
 extern at_system_error_e ctwing_send_data(uint8_t ack, uint8_t *buff, uint32_t len);
+#define CTWING_SEND_DATA_L(ack, buff, len)                    ({   \
+			                                                  	  at_system_error_e ret; \
+			                                                  	  xSemaphoreTake(ctwing_Lock_Mutex, portMAX_DELAY); \
+			                                                  	  ret = ctwing_send_data(ack, buff, len); \
+			                                                  	  xSemaphoreGive(ctwing_Lock_Mutex); \
+			                                                  	  ret; \
+                                                              })
+
 
 #ifdef __cplusplus
 }

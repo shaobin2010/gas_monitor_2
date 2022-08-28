@@ -38,7 +38,9 @@ void board_DelayUs(int32_t udelay)
 
 void mem_info(void)
 {
-	printf("\n\rTotal_mem:%d freeMem:%d\r\n", configTOTAL_HEAP_SIZE, xPortGetFreeHeapSize());
+	printf("\n\rTotal_mem:%d freeMem:%d  %d\r\n", configTOTAL_HEAP_SIZE,
+			 xPortGetFreeHeapSize(),
+			 xPortGetMinimumEverFreeHeapSize());
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -90,11 +92,12 @@ void board_init(void)
 	}
 	HAL_TIM_Base_Start_IT(&htim3);
 
-    mem_info();
     DS1302_Init();
     W25qxx_Init();
     L3G4200D_Init();  // g-sensor
     atgm332d_init();  // GPS module
+
+    mem_info();
 }
 
 void board_led_on(board_led_e led)

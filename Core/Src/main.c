@@ -101,13 +101,32 @@ int main(void)
   /* USER CODE BEGIN 2 */
   board_init();
 
+ extern void mem_info(void);
+
+ /*                              字节
+	Total_mem:6000 freeMem:4752  4752
+	Total_mem:6000 freeMem:3296  3296
+	Total_mem:6000 freeMem:2384  2384
+
+    Total_mem:6000 freeMem:2032  1880
+
+	                                字
+	Ranqi_Tx_Task   X       3       122     2
+	IDLE            R       0       108     4
+	Ranqi_Rx_Task   B       4       107     3
+	AT_Client_Task  B       5       107     1
+  * */
+
   // 0-6
   ret = xTaskCreate(AT_Client_Task, "AT_Client_Task", 256, NULL, 5, NULL);
   printf("AT_Client_Task  %d\r\n", ret);
-  ret = xTaskCreate(Ranqi_Tx_Task, "Ranqi_Tx_Task", 512, NULL, 3, NULL );
+  mem_info();
+  ret = xTaskCreate(Ranqi_Tx_Task, "Ranqi_Tx_Task", 312, NULL, 3, NULL );
   printf("Ranqi_Tx_Task  %d\r\n", ret);
-  ret = xTaskCreate(Ranqi_Rx_Task, "Ranqi_Rx_Task", 256, NULL, 4, NULL );
+  mem_info();
+  ret = xTaskCreate(Ranqi_Rx_Task, "Ranqi_Rx_Task", 176, NULL, 4, NULL );
   printf("Ranqi_Rx_Task  %d\r\n", ret);
+  mem_info();
 
   /* 启动调度器，任务开始执行 */
   vTaskStartScheduler();

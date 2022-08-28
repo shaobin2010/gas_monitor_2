@@ -300,11 +300,13 @@ at_system_error_e at_obj_exec_cmd(at_response_t resp, const char *cmd_expr, ...)
 	const char *cmd = NULL;
 	at_client_t client =  &sg_at_client;
 
+#if 0
 	if(xSemaphoreTake(atClient_Lock_Mutex, portMAX_DELAY) == pdFALSE) {
 		Log_e("at_obj_exec_cmd get atClient_Lock_Mutex FAILED!");
 		return AT_SYS_ERR_FAILURE;
 	}
 	Log_i("at_obj_exec_cmd atClient_Lock_Mutex LOCKED");
+#endif
 
 //	resp->line_counts = 0;
 	client->resp_status = AT_RESP_OK;
@@ -315,7 +317,7 @@ at_system_error_e at_obj_exec_cmd(at_response_t resp, const char *cmd_expr, ...)
 	va_end(args);
 
 	if (resp != NULL) {
-		if(xSemaphoreTake(atClient_Resp_Sema, resp->timeout*portTICK_PERIOD_MS ) == pdFALSE) {  // Timeout
+		if(xSemaphoreTake(atClient_Resp_Sema, pdMS_TO_TICKS(resp->timeout) ) == pdFALSE) {  // Timeout
 			cmd = at_get_last_cmd(&cmd_size);
 			Log_e("execute command (%.*s) timeout %dms!", cmd_size, cmd, resp->timeout);
 			client->resp_status = AT_RESP_TIMEOUT;
@@ -330,11 +332,13 @@ at_system_error_e at_obj_exec_cmd(at_response_t resp, const char *cmd_expr, ...)
 	}
 
 	 client->resp = NULL;
+#if 0
 	if (xSemaphoreGive(atClient_Lock_Mutex) != pdTRUE) {
 		Log_e("at_obj_exec_cmd release atClient_Lock_Mutex FAILED!");
 		return AT_SYS_ERR_FAILURE;
 	}
 	Log_i("at_obj_exec_cmd atClient_Lock_Mutex UNLOCKED");
+#endif
 	return result;
 }
 

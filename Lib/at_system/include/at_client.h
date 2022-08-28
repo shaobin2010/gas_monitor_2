@@ -125,7 +125,16 @@ void at_set_urc_table(at_client_t client, const at_urc_t table, uint32_t size);
 int at_client_send(at_client_t client, char *buf, int size);
 
 at_system_error_e at_obj_exec_cmd(at_response_t resp, const char *cmd_expr, ...);
-#define at_exec_cmd(resp, ...)                   at_obj_exec_cmd(resp, __VA_ARGS__)
+//#define at_exec_cmd(resp, ...)                   at_obj_exec_cmd(resp, __VA_ARGS__)
+
+extern SemaphoreHandle_t atClient_Lock_Mutex;
+#define at_exec_cmd(resp, ...)                   ({ \
+		                                            at_system_error_e ret; \
+		                                            xSemaphoreTake(atClient_Lock_Mutex, portMAX_DELAY); \
+		                                            ret = at_obj_exec_cmd(resp, __VA_ARGS__); \
+		                                            xSemaphoreGive(atClient_Lock_Mutex); \
+		                                            ret; \
+													})
 
 /* AT response object create and delete */
 at_response_t at_create_resp(uint32_t buf_size, uint32_t line_num, uint32_t timeout);

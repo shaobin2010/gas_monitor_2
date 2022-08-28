@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "FreeRTOS.h"
+#include "event_groups.h"
 
 /*****************************************************/
 /*                 Device resource                   */
@@ -66,8 +68,8 @@ X定义如下：
 #define Fang_Bao_Level                "2222222"   // 防爆等级
 #define Fang_Shui_Level               "3333333"   // 防水等级
 
-#define DEFAULT_SAMPLE_INTERVAL        5
-#define DEFAULT_REPORT_INTERVAL        60
+#define DEFAULT_SAMPLE_INTERVAL        1 // 5
+#define DEFAULT_REPORT_INTERVAL        2 // 60
 #define DEFAULT_ALARM_TOLERANCE        3
 #define DEFAULT_FILTER_COEF            1
 #define DEFAULT_SERVER_IP              0xDDE5D6CA  // 221.229.214.202
@@ -106,6 +108,8 @@ typedef struct {
 } temp_limit_s;
 
 typedef struct {
+	uint32_t ts;
+	uint32_t msg_id;
 #if PRODUCT_PORTS == 2
     float press_data[3][2];     // loc, port
     float  temp_data[3][2];     // loc, port

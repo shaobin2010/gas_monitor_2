@@ -16,6 +16,8 @@ static at_device_s atDevice_dev;
 #define Ctwing_Send_Max_Len    500  // 500*2 = 1000
 uint8_t ctwing_send_buff[1024];
 
+SemaphoreHandle_t ctwing_Lock_Mutex;
+
 static Ranqi_xMessage_s ranqi_tx_msg;
 extern QueueHandle_t Ranqi_Rx_Queue;
 
@@ -26,6 +28,11 @@ extern QueueHandle_t Ranqi_Rx_Queue;
 at_system_error_e at_device_init(void)
 {
 	memset(&atDevice_dev, 0, sizeof(atDevice_dev));
+	ctwing_Lock_Mutex = xSemaphoreCreateMutex();
+	if(ctwing_Lock_Mutex == NULL) {
+		Log_e("at_device_init create mutex FAILED");
+    	return AT_SYS_ERR_FAILURE;
+	}
 
 	while(at_client_status() < AT_STATUS_AT_READY) {
 		osDelay(1000);

@@ -47,57 +47,69 @@ typedef struct {
     uint32_t      ts;
 } __attribute__((packed)) ranqi_group_s;
 
-void build_seg(ranqi_seg_s *p_seg, uint8_t port, uint8_t loc, sensor_type_e type)
+void build_seg(ranqi_seg_s *p_seg, uint8_t port, uint8_t loc, sensor_type_e type, float data)
 {
    p_seg->type   = type;
    p_seg->loc    = (uint8_t)((port << 4) | loc);
-   p_seg->value  = ranqi_read_sensor_data(port, loc, type);
+   p_seg->value  = data;
 }
 
-void build_groups(uint8_t *buff)
+void build_groups(uint8_t *buff, sensor_data_s *s_data)
 {
     ranqi_group_s *p_grp = (ranqi_group_s *)buff;
 
     // group 1
     p_grp->seg_num = 0x02; 
-    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
-    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS,
+    		                s_data->press_data[Ranqi_Sensor_Loc_Low][Ranqi_Port_0]);
+    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP,
+    		                s_data->temp_data[Ranqi_Sensor_Loc_Low][Ranqi_Port_0]);
 
 #if PRODUCT_PORTS == 2
     p_grp->seg_num = 0x04; 
-    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
-    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS,
+                            s_data->press_data[Ranqi_Sensor_Loc_Low][Ranqi_Port_1]);
+    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP,
+                            s_data->temp_data[Ranqi_Sensor_Loc_Low][Ranqi_Port_1]);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Tick();
+    p_grp->ts = s_data->ts;
     p_grp++;
 
     // group 2
     p_grp->seg_num = 0x02; 
-    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS);
-    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP);
+    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS,
+                            s_data->press_data[Ranqi_Sensor_Loc_Mid][Ranqi_Port_0]);
+    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP,
+                            s_data->temp_data[Ranqi_Sensor_Loc_Mid][Ranqi_Port_0]);
 
 #if PRODUCT_PORTS == 2
     p_grp->seg_num = 0x04; 
-    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS);
-    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP);
+    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_PRESS,
+                            s_data->press_data[Ranqi_Sensor_Loc_Mid][Ranqi_Port_1]);
+    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Mid, SENSOR_TEMP,
+                            s_data->temp_data[Ranqi_Sensor_Loc_Mid][Ranqi_Port_1]);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Tick();
+    p_grp->ts = s_data->ts;
     p_grp++;
 
     // group 3
     p_grp->seg_num = 0x02; 
-    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
-    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_TEMP);
+    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_PRESS,
+                            s_data->press_data[Ranqi_Sensor_Loc_High][Ranqi_Port_0]);
+    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_High, SENSOR_TEMP,
+                            s_data->temp_data[Ranqi_Sensor_Loc_High][Ranqi_Port_0]);
 
 #if PRODUCT_PORTS == 2
     p_grp->seg_num = 0x04; 
-    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
-    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_TEMP);
+    build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_PRESS,
+                            s_data->press_data[Ranqi_Sensor_Loc_High][Ranqi_Port_1]);
+    build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_TEMP,
+                            s_data->temp_data[Ranqi_Sensor_Loc_High][Ranqi_Port_1]);
 #endif   
-    p_grp->ts = DS1302_Read_Unix_Tick();
+    p_grp->ts = s_data->ts;
 }
 
-uint32_t build_up_normal_msg(uint8_t *buff)
+uint32_t build_up_normal_msg(uint8_t *buff, sensor_data_s *s_data)
 {
     uint32_t len = 0;
 
@@ -112,14 +124,14 @@ uint32_t build_up_normal_msg(uint8_t *buff)
     msg_head->group_num = 3; // 3 groups
     len = sizeof(ranqi_up_msg_head_s);
 
-    build_groups(buff + len);   // TODO RC4 加密 
+    build_groups(buff + len, s_data);   // TODO RC4 加密
     len += msg_head->group_num*sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
-
     msg_tail->checksum = utils_checksum(buff, len);
     msg_tail->fofo = 0xFF;
 
+    s_data->msg_id = msg_head->msg_id;
     return len + sizeof(ranqi_up_msg_tail_s);
 }
 
@@ -160,8 +172,8 @@ uint32_t build_up_more_msg(uint8_t *buff)
     // Build one group
     ranqi_group_s *p_grp = (ranqi_group_s *)(buff + len);
     p_grp->seg_num = 0x02; 
-    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
-    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+//    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
+//    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #if PRODUCT_PORTS == 2
     p_grp->seg_num = 0x04; 
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
@@ -303,8 +315,8 @@ uint32_t build_up_manual_msg(uint8_t *buff)
     // Build one group
     ranqi_group_s *p_grp = (ranqi_group_s *)(buff + len);
     p_grp->seg_num = 0x02; 
-    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
-    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
+//    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
+//    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #if PRODUCT_PORTS == 2
     p_grp->seg_num = 0x04; 
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);

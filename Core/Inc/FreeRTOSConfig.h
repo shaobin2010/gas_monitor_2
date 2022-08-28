@@ -67,6 +67,10 @@
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
 
+
+#define configUSE_TRACE_FACILITY                  1
+#define configUSE_STATS_FORMATTING_FUNCTIONS      1
+
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
 #define configMAX_CO_ROUTINE_PRIORITIES          ( 2 )
@@ -113,7 +117,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 /* USER CODE BEGIN 1 */
-#define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+#define configASSERT( x ) if ((x) == 0) {printf("%s:%d\r\n", __FILE__, __LINE__); taskDISABLE_INTERRUPTS(); for( ;; );}
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS

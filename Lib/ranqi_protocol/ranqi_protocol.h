@@ -468,7 +468,7 @@ typedef enum{
 /***********************************************/
 /*              Build Message                  */
 /***********************************************/
-extern uint32_t build_up_normal_msg(uint8_t *buff);
+extern uint32_t build_up_normal_msg(uint8_t *buff, sensor_data_s *s_data);
 extern uint32_t build_up_more_msg(uint8_t *buff);
 extern uint32_t build_up_ack_msg(uint8_t *buff, uint8_t ack, uint32_t msg_id);
 extern uint32_t build_up_feedback_msg(uint8_t *buff, uint32_t msg_id, uint8_t *act, uint32_t act_len);
