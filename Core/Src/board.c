@@ -96,7 +96,9 @@ void board_init(void)
     DS1302_Init();
     W25qxx_Init();
     L3G4200D_Init();  // g-sensor
-    ad147a_init();    // 中压传感器
+//    ad14xx_init(AD146A_HIGH);  // 高压传感器
+    ad14xx_init(AD147A_MID);   // 中压传感器
+//    ad14xx_init(AD143C_LOW);   // 低压传感器
     atgm332d_init();  // GPS module
 
     mem_info();

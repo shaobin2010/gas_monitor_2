@@ -9,7 +9,7 @@ extern "C" {
 #include "ds1302.h"
 #include "w25q128.h"
 #include "l3g4200d.h"
-#include "ad147a.h"
+#include "ad14xx.h"
 #include "atgm332d.h"
 
 #define RANQI_QUEUE_DEPTH         2
