@@ -77,6 +77,7 @@ static void ranqi_send_normal_msg(sensor_data_s *s_data)
     if (i >= 3) {
     	// 3次发送失败， 保存数据准备下轮补发
     	// TODO....
+    	printf("Save sensor data for re-send in next round\r\n");
     }
 }
 
@@ -1163,7 +1164,7 @@ static void check_gps_info(void)
 	}
 }
 
-#define DEBUG_HEAP_STACK
+//#define DEBUG_HEAP_STACK
 extern void mem_info(void);
 
 void Ranqi_Tx_Task( void *pvParameters )

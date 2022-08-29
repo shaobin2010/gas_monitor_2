@@ -9,10 +9,10 @@ extern "C" {
 #include "main.h"
 #include "usart.h"
 
-#define USART_REC_LEN  			200 // 定义最大接收字节数 200
+#define USART_REC_LEN  			80 // 定义最大接收字节数 80
 
 // 定义数组长度
-#define GPS_Buffer_Length 80
+#define GPS_Buffer_Length       USART_REC_LEN
 #define UTCTime_Length 11
 #define latitude_Length 11
 #define N_S_Length 2

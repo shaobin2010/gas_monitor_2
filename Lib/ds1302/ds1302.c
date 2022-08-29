@@ -40,10 +40,6 @@ void ds_delay(int i)
 	}
 }
 
-void DS1302_Init(void)
-{
-}
-
 static void DS1302_Out(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -206,23 +202,38 @@ void DS1302_SetTime(ds_time_s *time)
 #define xDAY      (24*xHOUR)     // 1天的秒数
 #define xYEAR     (365*xDAY)     // 1年的秒数
 
+
+const uint8_t monthes[12]={
+    /*01月*/31,
+    /*02月*/28,
+    /*03月*/31,
+    /*04月*/30,
+    /*05月*/31,
+    /*06月*/30,
+    /*07月*/31,
+    /*08月*/31,
+    /*09月*/30,
+    /*10月*/31,
+    /*11月*/30,
+    /*12月*/31
+};
+
+static unsigned char applib_dt_is_leap_year(unsigned short year)
+{
+
+    if ((year % 400) == 0) {
+        return 1;
+    } else if ((year % 100) == 0) {
+        return 0;
+    } else if ((year % 4) == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 void tick_to_time(uint32_t unix_time, ds_time_s *utc_time)
 {
-    uint32_t monthes[12]={
-        /*01月*/31,
-        /*02月*/28,
-        /*03月*/31,
-        /*04月*/30,
-        /*05月*/31,
-        /*06月*/30,
-        /*07月*/31,
-        /*08月*/31,
-        /*09月*/30,
-        /*10月*/31,
-        /*11月*/30,
-        /*12月*/31
-    };
-
     uint32_t days, leap_y_count;
     utc_time->sec = unix_time%60;   // 获得秒
     unix_time /= 60;

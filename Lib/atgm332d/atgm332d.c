@@ -46,11 +46,13 @@ void gps_RxCpltCallback(UART_HandleTypeDef *huart)
 			memset(Save_Data.GPS_Buffer, 0, GPS_Buffer_Length);      // 清空
 			memcpy(Save_Data.GPS_Buffer, USART_RX_BUF, buf_pos); 	 // 保存数据
 			Save_Data.isGetData = true;
+
 			buf_pos = 0;
-			memset(USART_RX_BUF, 0, USART_REC_LEN);                   // 清空				
+			memset(USART_RX_BUF, 0, USART_REC_LEN);                   // 清空
 		}
 	}
 
+	// 保证内存不溢出
 	if(buf_pos >= USART_REC_LEN) {
 		buf_pos = USART_REC_LEN - 1;
 	}
@@ -194,6 +196,8 @@ bool atgm332d_get_e_w(char *e_w)
     return false;
 }
 
+#if 0
+
 void atgm332d_print_gps_info(void)
 {
 	if (Save_Data.isParseData)
@@ -231,3 +235,5 @@ void atgm332d_print_gps_info(void)
 		
 	}
 }
+
+#endif
