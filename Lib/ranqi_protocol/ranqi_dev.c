@@ -1166,6 +1166,7 @@ static void check_gps_info(void)
 
 //#define DEBUG_HEAP_STACK
 extern void mem_info(void);
+static float tmp_press, tmp_temp;
 
 void Ranqi_Tx_Task( void *pvParameters )
 {
@@ -1178,7 +1179,8 @@ void Ranqi_Tx_Task( void *pvParameters )
 	atDevice_wait_network();
     while(1)
     {
-    	ad147a_init();    // 中压传感器
+    	ad147a_get_press_temp(&tmp_press, &tmp_temp);  // 中压传感器
+
     	atDevice_ctwing_connect(ranqi_dev.server_ip, ranqi_dev.server_port);
 
     	Ranqi_Sample_Report_Process();

@@ -63,50 +63,42 @@ void ad147a_init(void)
 	AD147A_Write_Reg(AD147A_CTL2, 0xA8);
 }
 
-#if 0
-/* get X-axis data */
-int16_t L3G4200D_Get_X(void)
+static void printfloat(char *str, float value)
 {
-	uint8_t buf[2];
-	int16_t data;
-
-    buf[0]= L3G4200D_Read_Reg(L3G4200D_OUT_X_L);
-    buf[1]= L3G4200D_Read_Reg(L3G4200D_OUT_X_H);
-
-    data=(buf[1]<<8)+buf[0];
-
-    return data;
+	int tmp, tmp1, tmp2, tmp3, tmp4;
+	tmp=(int)value;
+	tmp1 = (int)((value-tmp)*10)%10;
+	tmp2 = (int)((value-tmp)*100)%10;
+	tmp3 = (int)((value-tmp)*1000)%10;
+	tmp4 = (int)((value-tmp)*10000)%10;
+	printf("%s: %d.%d%d%d%d\r\n", str, tmp, tmp1,tmp2,tmp3,tmp4);
 }
 
-/* get Y-axis data */
-int16_t L3G4200D_Get_Y(void)
+/* get pressure data */
+void ad147a_get_press_temp(float *pressure, float *temp)
 {
-	uint8_t buf[2];
-	int16_t data;
+	uint32_t raw_data;
+	uint8_t  status;
 
-    buf[0]= L3G4200D_Read_Reg(L3G4200D_OUT_Y_L);
-    buf[1]= L3G4200D_Read_Reg(L3G4200D_OUT_Y_H);
+	AD147A_Write_Reg(AD147A_ACT_CTRL1, AD147A_ACT_CTRL1_BOTH);
+	while(1){
+		status = AD147A_Read_Reg(AD147A_STATUS);
+		if ((status&AD147A_STAT_CHECK) == AD147A_STAT_BOTH) {
+			raw_data = 0;
+			raw_data |= AD147A_Read_Reg(AD147A_PRESS_LOW);
+			raw_data |= (AD147A_Read_Reg(AD147A_PRESS_MID) << 8);
+			raw_data |= (AD147A_Read_Reg(AD147A_PRESS_HIGH) << 8);
+			raw_data &= 0x1FF;
+			*pressure = raw_data*6.0/1000;
+			printfloat("press[kPa] : ", *pressure);
 
-    data =( buf[1] << 8) + buf[0];
 
-    return data;
+			raw_data = 0;
+			raw_data |= AD147A_Read_Reg(AD147A_TEMP_LOW);
+			raw_data |= (AD147A_Read_Reg(AD147A_TEMP_HIGH) << 8);
+			*temp = (raw_data>>8)*1.0;
+			printfloat("temp : ", *temp);
+			break;
+		}
+	}
 }
-
-
-/* get Z-axis data */
-int16_t L3G4200D_Get_Z(void)
-{
-	uint8_t buf[2];
-	int16_t data;
-
-    buf[0]= L3G4200D_Read_Reg(L3G4200D_OUT_Z_L);
-    buf[1]= L3G4200D_Read_Reg(L3G4200D_OUT_Z_H);
-
-    data=(buf[1]<<8)+buf[0];
-
-    return data;
-}
-
-
-#endif
-

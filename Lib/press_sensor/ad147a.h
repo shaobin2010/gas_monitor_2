@@ -20,6 +20,8 @@ extern "C" {
 #define AD147A_STAT_PDOR           (1 << 2)  // data over fun flag
 #define AD147A_STAT_TRDY           (1 << 4)  // temp data ready
 #define AD147A_STAT_BUSY           (1 << 7)  // busy state flag
+#define AD147A_STAT_BOTH           (AD147A_STAT_PRDY|AD147A_STAT_TRDY)
+#define AD147A_STAT_CHECK          (AD147A_STAT_BUSY|AD147A_STAT_BOTH)
 #define AD147A_STATUS              0x03
 
 // [16:0]  17 bit pressure output 0 ~ 131071 Pa = POUT[LSB] * 6
@@ -42,6 +44,7 @@ extern "C" {
 
 #define AD147A_ACT_CTRL1_PDET      (1 << 1)
 #define AD147A_ACT_CTRL1_TDET      (1 << 3)
+#define AD147A_ACT_CTRL1_BOTH      (AD147A_ACT_CTRL1_PDET | AD147A_ACT_CTRL1_TDET)
 #define AD147A_ACT_CTRL1           0x10   // register action mode/ command action mode
 
 #define AD147A_ACT_CTRL2_SRST     (1 << 7)
@@ -58,6 +61,7 @@ extern "C" {
 
 
 extern void ad147a_init(void);
+extern void ad147a_get_press_temp(float *pressure, float *temp);
 
 #ifdef __cplusplus
 }
