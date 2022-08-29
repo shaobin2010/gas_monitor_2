@@ -1178,6 +1178,7 @@ void Ranqi_Tx_Task( void *pvParameters )
 	atDevice_wait_network();
     while(1)
     {
+    	ad147a_init();    // 中压传感器
     	atDevice_ctwing_connect(ranqi_dev.server_ip, ranqi_dev.server_port);
 
     	Ranqi_Sample_Report_Process();

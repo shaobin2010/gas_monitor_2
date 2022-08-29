@@ -92,6 +92,7 @@ void board_init(void)
 	}
 	HAL_TIM_Base_Start_IT(&htim3);
 
+
     DS1302_Init();
     W25qxx_Init();
     L3G4200D_Init();  // g-sensor

@@ -61,8 +61,10 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SCL_3_Pin|SDA_3_Pin|DS1302_CLK_Pin|DS1302_DAT_Pin
-                          |DS1302_OE_Pin|SCL_2_Pin|SDA_2_Pin|SCL_1_Pin
-                          |SDA_1_Pin|L3G_SCL_Pin|L3G_SDA_Pin, GPIO_PIN_RESET);
+                          |DS1302_OE_Pin|L3G_SCL_Pin|L3G_SDA_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, SCL_2_Pin|SDA_2_Pin|SCL_1_Pin|SDA_1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = NB_nRST_Pin;
@@ -80,16 +82,16 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin
                            PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = SCL_3_Pin|SDA_3_Pin|SCL_2_Pin|SDA_2_Pin
-                          |SCL_1_Pin|SDA_1_Pin|L3G_SDA_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pin = SCL_3_Pin|DS1302_CLK_Pin|DS1302_DAT_Pin|DS1302_OE_Pin
+                          |SCL_2_Pin|SCL_1_Pin|L3G_SCL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = DS1302_CLK_Pin|DS1302_DAT_Pin|DS1302_OE_Pin|L3G_SCL_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pin = SDA_3_Pin|SDA_2_Pin|SDA_1_Pin|L3G_SDA_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
