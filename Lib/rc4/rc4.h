@@ -1,27 +1,16 @@
-#ifndef RC4_H
-#define RC4_H
+#ifndef _RC4_H_
+#define _RC4_H_
+#include "stdint.h"
 
+/**RC4***/
+#define SBOX_LEN    32
+#define KEY_LEN     8
+#define MKEY_LEN    16
+#define DATA_LEN    16
 
-#ifdef __cplusplus
-extern "C" {
+void init_kbox(uint8_t *key, uint8_t keyleng);
+void init_sbox(void);
+void rc4_encrypt(uint8_t *key, uint8_t key_leng, uint8_t *buf, int len);
+void rc4_decrypt(uint8_t *key, uint8_t key_leng, uint8_t *sbuf, uint8_t *dbuf, int len);
+
 #endif
-
-#include "main.h"
-
-
-typedef struct {
-    uint8_t se[256], sd[256];
-    uint32_t pose, posd;
-    uint8_t te, td;
-} rc4_ctx;
-
-void rc4_ks(rc4_ctx *ctx, const uint8_t *key, uint32_t key_len);
-void rc4_encrypt(rc4_ctx *ctx, const uint8_t *src, uint8_t *dst, uint32_t len);
-void rc4_decrypt(rc4_ctx *ctx, const uint8_t *src, uint8_t *dst, uint32_t len);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* !RC4_H */
