@@ -3,10 +3,12 @@
 #include "stdint.h"
 
 /**RC4***/
-#define SBOX_LEN    32
-#define KEY_LEN     8
-#define MKEY_LEN    16
-#define DATA_LEN    16
+#define SBOX_LEN        32
+#define RC4_KEY_LEN     8
+#define MKEY_LEN        16
+#define DATA_LEN        16
+
+extern const uint8_t en_Key[];
 
 void init_kbox(uint8_t *key, uint8_t keyleng);
 void init_sbox(void);

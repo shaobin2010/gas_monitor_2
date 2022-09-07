@@ -1,8 +1,11 @@
 
 #include "utils.h"
 
-#define BigLittleSwap16(A) ((((uint16_t)(A)&0xff00) >> 8) | \
-                            (((uint16_t)(A)&0x00ff) << 8))
+typedef union FLOAT_CONV
+{
+    float f;
+    char c[4];
+} float_conv;
 
 uint16_t utils_checksum(uint8_t *buff, uint32_t len)
 {
@@ -12,7 +15,19 @@ uint16_t utils_checksum(uint8_t *buff, uint32_t len)
         sum += buff[i];
     }
 
-    return sum; //BigLittleSwap16(sum);
+    return sum;
+}
+
+
+float float_little_bit(float value)
+{
+    float_conv d1,d2;
+    d1.f = value;
+    d2.c[0] = d1.c[3];
+    d2.c[1] = d1.c[2];
+    d2.c[2] = d1.c[1];
+    d2.c[3] = d1.c[0];
+    return d2.f;
 }
 
 

@@ -332,9 +332,34 @@ at_system_error_e ctwing_reg_server(void)
     return result;
 }
 
+at_system_error_e ctwing_dereg_server(void)
+{
+	char *ptr;
+	at_system_error_e result = AT_SYS_RET_SUCCESS;
+	at_response_t resp = NULL;
+
+	resp = at_create_resp(64, 0, CMD_TIMEOUT_MS);
+	if(AT_SYS_RET_SUCCESS != at_exec_cmd(resp, "AT+MCWCLOSE")) {
+    	Log_e("AT+MCWCLOSE exec ERROR");
+		result = AT_SYS_ERR_FAILURE;
+	}
+
+	ptr = strstr(resp->buf, "OK");
+	if(ptr == NULL) {
+		result = AT_SYS_ERR_FAILURE;
+	}
+
+	if(resp) {
+		at_delete_resp(resp);
+	}
+	
+    return result;
+}
+
 
 void atDevice_ctwing_connect(uint32_t server_ip, uint16_t server_port)
 {
+	uint8_t wait_time; 
     static uint8_t setup_server = 0;
 
     if(Ctwing_Ready(atDevice_dev.ctwing_flag)){
@@ -346,8 +371,15 @@ void atDevice_ctwing_connect(uint32_t server_ip, uint16_t server_port)
     	setup_server = 1;
     }
 
+retry:
+	wait_time = 5; 
     ctwing_reg_server();
     while(!Ctwing_Ready(atDevice_dev.ctwing_flag)){
+		if(!wait_time) {
+			ctwing_dereg_server();
+			goto retry;
+		}
+		wait_time--;
         osDelay(1000);
     }
 }

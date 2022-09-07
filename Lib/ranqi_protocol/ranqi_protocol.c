@@ -1,6 +1,8 @@
 #include "include/at_device.h"
 #include "ranqi_protocol.h"
 #include "ds1302.h"
+#include "rc4.h"
+#include "utils.h"
 
 extern uint32_t ranqi_dev_get_up_msg_id(void);
 extern float ranqi_read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e type);
@@ -17,21 +19,21 @@ extern float ranqi_read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e typ
 
 typedef struct {
     uint8_t   head[2];   // 0xaa + 0x55
-    uint32_t  msg_id;    // 0x00000000 ~ 0x7FFFFFFF
+    uint32_t  msg_id;    // 0x00000000 ~ 0x7FFFFFFF   大端
     uint8_t   type;      // 0x22
     uint8_t   imei[15];  // IMEI
     uint8_t   group_num; // 篇章总数m  <= 12
 } __attribute__((packed)) ranqi_up_msg_head_s;
 
 typedef struct {
-    uint16_t  checksum;
+    uint16_t  checksum;  // 大端
     uint8_t   fofo;      // 0xFF
 } __attribute__((packed)) ranqi_up_msg_tail_s;
 
 typedef struct {
     uint8_t type;     // type
     uint8_t loc;      // location
-    float   value;    // value
+    float   value;    // value  大端
 } __attribute__((packed))  ranqi_seg_s;
 
 typedef struct {
@@ -44,7 +46,7 @@ typedef struct {
     ranqi_seg_s   seg4;        // Environment Pressure
 #endif    
 
-    uint32_t      ts;
+    uint32_t      ts;          // 大端
 } __attribute__((packed)) ranqi_group_s;
 
 void build_seg(ranqi_seg_s *p_seg, uint8_t port, uint8_t loc, sensor_type_e type, float data)
@@ -52,6 +54,7 @@ void build_seg(ranqi_seg_s *p_seg, uint8_t port, uint8_t loc, sensor_type_e type
    p_seg->type   = type;
    p_seg->loc    = (uint8_t)((port << 4) | loc);
    p_seg->value  = data;
+   p_seg->value  = float_little_bit(p_seg->value);
 }
 
 void build_groups(uint8_t *buff, sensor_data_s *s_data)
@@ -109,6 +112,7 @@ void build_groups(uint8_t *buff, sensor_data_s *s_data)
     p_grp->ts = s_data->ts;
 }
 
+#if 1
 uint32_t build_up_normal_msg(uint8_t *buff, sensor_data_s *s_data)
 {
     uint32_t len = 0;
@@ -117,24 +121,79 @@ uint32_t build_up_normal_msg(uint8_t *buff, sensor_data_s *s_data)
 
     msg_head->head[0] = 0xaa;
     msg_head->head[1] = 0x55;
-    msg_head->msg_id  = ranqi_dev_get_up_msg_id();
+    msg_head->msg_id  = U32_LITTLE_BIG(ranqi_dev_get_up_msg_id());
     msg_head->type    = MSG_NORNAL;
     memcpy(msg_head->imei, atDevice_get_imei(), IMEI_LEN);
 
     msg_head->group_num = 3; // 3 groups
     len = sizeof(ranqi_up_msg_head_s);
 
-    build_groups(buff + len, s_data);   // TODO RC4 加密
+    build_groups(buff + len, s_data);
+    rc4_encrypt(en_Key, RC4_KEY_LEN, (uint8_t *)buff + len, msg_head->group_num*sizeof(ranqi_group_s));
+
     len += msg_head->group_num*sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
-    msg_tail->checksum = utils_checksum(buff, len);
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len));
     msg_tail->fofo = 0xFF;
 
     s_data->msg_id = msg_head->msg_id;
     return len + sizeof(ranqi_up_msg_tail_s);
 }
+#else
+uint32_t build_up_normal_msg(uint8_t *buff, sensor_data_s *s_data)
+{
+    uint32_t len = 0;
+    (void)s_data;
+    ranqi_up_msg_head_s *msg_head = (ranqi_up_msg_head_s *)buff;
 
+    msg_head->head[0] = 0xaa;
+    msg_head->head[1] = 0x55;
+    msg_head->msg_id  = U32_LITTLE_BIG(26915);
+    msg_head->type    = MSG_NORNAL;
+    memcpy(msg_head->imei, atDevice_get_imei(), IMEI_LEN);
+
+    msg_head->group_num = 2; // 3 groups
+    len = sizeof(ranqi_up_msg_head_s);
+
+//    build_groups(buff + len, s_data);
+    ranqi_group_s *p_grp = (ranqi_group_s *)(buff + len);
+    p_grp->seg_num = 0x02;
+    p_grp->seg1.type = 0x00;
+    p_grp->seg1.loc = 0x00;
+    p_grp->seg1.value = 20;
+    p_grp->seg1.value = float_little_bit(p_grp->seg1.value);
+
+    p_grp->seg2.type = 0x01;
+    p_grp->seg2.loc = 0x00;
+    p_grp->seg2.value = 25;
+    p_grp->seg2.value = float_little_bit(p_grp->seg2.value);
+    p_grp->ts = U32_LITTLE_BIG(1661935680); //DS1302_Read_Unix_Tick();
+
+    p_grp++;
+    p_grp->seg_num = 0x02;
+    p_grp->seg1.type = 0x00;
+    p_grp->seg1.loc = 0x00;
+    p_grp->seg1.value = 20;
+    p_grp->seg1.value = float_little_bit(p_grp->seg1.value);
+    p_grp->seg2.type = 0x01;
+    p_grp->seg2.loc = 0x00;
+    p_grp->seg2.value = 25;
+    p_grp->seg2.value = float_little_bit(p_grp->seg2.value);
+    p_grp->ts = U32_LITTLE_BIG(1661935740); //DS1302_Read_Unix_Tick();
+
+    rc4_encrypt(en_Key, RC4_KEY_LEN, (uint8_t *)buff + len, msg_head->group_num*sizeof(ranqi_group_s));
+
+    len += msg_head->group_num*sizeof(ranqi_group_s);
+
+    ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len));
+    msg_tail->fofo = 0xFF;
+
+    s_data->msg_id = msg_head->msg_id;
+    return len + sizeof(ranqi_up_msg_tail_s);
+}
+#endif
 
 
 /***************************************************************/
@@ -164,7 +223,7 @@ uint32_t build_up_more_msg(uint8_t *buff)
     ranqi_up_more_head_s *msg_head = (ranqi_up_more_head_s *)buff;
     msg_head->head[0] = 0xaa;
     msg_head->head[1] = 0x55;
-    msg_head->msg_id  = ranqi_dev_get_up_msg_id();
+    msg_head->msg_id  = U32_LITTLE_BIG(ranqi_dev_get_up_msg_id());
     msg_head->type    = MSG_MORE;
     memcpy(msg_head->imei, ranqi_get_imei(), IMEI_LEN);
     len = sizeof(ranqi_up_more_head_s);
@@ -179,12 +238,13 @@ uint32_t build_up_more_msg(uint8_t *buff)
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #endif    
-    p_grp->ts = DS1302_Read_Unix_Tick();
+    p_grp->ts = U32_LITTLE_BIG(DS1302_Read_Unix_Tick());
+    // TODO RC4 加密
     len += sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
 
-    msg_tail->checksum = utils_checksum(buff, len);
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len));
     msg_tail->fofo = 0xFF;
 
     return len + sizeof(ranqi_up_msg_tail_s);
@@ -225,7 +285,7 @@ uint32_t build_up_feedback_msg(uint8_t *buff, uint32_t msg_id, uint8_t *act, uin
     len = len + act_len;
 
     msg_tail = (ranqi_up_msg_tail_s *)(buff + len);
-    msg_tail->checksum = utils_checksum(buff, len);
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len));
     msg_tail->fofo = 0xFF;
 
     return len + sizeof(ranqi_up_msg_tail_s);
@@ -268,7 +328,7 @@ uint32_t build_up_alarm_msg(uint8_t *buff, uint8_t *alm_info, uint32_t alm_len)
 
     msg_head->head[0] = 0xaa;
     msg_head->head[1] = 0x55;
-    msg_head->pkg_id  = ranqi_dev_get_up_msg_id();
+    msg_head->pkg_id  = U32_LITTLE_BIG(ranqi_dev_get_up_msg_id());
     msg_head->type    = MSG_ALARM;
     memcpy(msg_head->imei, ranqi_get_imei(), IMEI_LEN);
     len = sizeof(ranqi_up_feedback_head_s);
@@ -277,8 +337,8 @@ uint32_t build_up_alarm_msg(uint8_t *buff, uint8_t *alm_info, uint32_t alm_len)
     len = len + alm_len;
 
     msg_tail = (ranqi_up_msg_ts_tail_s *)(buff + len);
-    msg_tail->ts = DS1302_Read_Unix_Tick();
-    msg_tail->checksum = utils_checksum(buff, len + 4);
+    msg_tail->ts = U32_LITTLE_BIG(DS1302_Read_Unix_Tick());
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len + 4));
     msg_tail->fofo = 0xFF;
 
     return len + sizeof(ranqi_up_msg_ts_tail_s);
@@ -306,7 +366,7 @@ uint32_t build_up_manual_msg(uint8_t *buff)
     ranqi_up_manual_head_s *msg_head = (ranqi_up_manual_head_s *)buff;
     msg_head->head[0] = 0xaa;
     msg_head->head[1] = 0x55;
-    msg_head->pkg_id  = ranqi_dev_get_up_msg_id();
+    msg_head->pkg_id  = U32_LITTLE_BIG(ranqi_dev_get_up_msg_id());
     msg_head->type    = MSG_MUNUAL;
     memcpy(msg_head->imei, ranqi_get_imei(), IMEI_LEN);
     memcpy(msg_head->sw_ver, Ranqi_Dev_Sw_Ver, 2);
@@ -314,20 +374,20 @@ uint32_t build_up_manual_msg(uint8_t *buff)
 
     // Build one group
     ranqi_group_s *p_grp = (ranqi_group_s *)(buff + len);
-    p_grp->seg_num = 0x02; 
+    p_grp->seg_num = 0x02;
 //    build_seg(&p_grp->seg1, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
 //    build_seg(&p_grp->seg2, Ranqi_Port_0, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
 #if PRODUCT_PORTS == 2
-    p_grp->seg_num = 0x04; 
+    p_grp->seg_num = 0x04;
     build_seg(&p_grp->seg3, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_PRESS);
     build_seg(&p_grp->seg4, Ranqi_Port_1, Ranqi_Sensor_Loc_Low, SENSOR_TEMP);
-#endif    
-    p_grp->ts = DS1302_Read_Unix_Tick();
+#endif
+    p_grp->ts = U32_LITTLE_BIG(DS1302_Read_Unix_Tick());
     len += sizeof(ranqi_group_s);
 
     ranqi_up_msg_tail_s *msg_tail = (ranqi_up_msg_tail_s *)(buff +len);
 
-    msg_tail->checksum = utils_checksum(buff, len);
+    msg_tail->checksum = U16_LITTLE_BIG(utils_checksum(buff, len));
     msg_tail->fofo = 0xFF;
 
     return len + sizeof(ranqi_up_msg_tail_s);

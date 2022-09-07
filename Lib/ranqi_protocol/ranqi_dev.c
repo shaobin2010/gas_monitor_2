@@ -558,13 +558,13 @@ static bool validate_frame(uint8_t *buff, uint16_t len)
         head_body_len = sizeof(ranqi_msg_dn_head_s); 
         nots_tail = (ranqi_msg_dn_nots_tail_s *)buff[head_body_len];
         
-        if(nots_tail->checksum != utils_checksum(buff, head_body_len)) {
+        if(nots_tail->checksum != U16_LITTLE_BIG(utils_checksum(buff, head_body_len))) {
             return false;
         }
     } else {
         head_body_len = len - sizeof(ranqi_msg_dn_tail_s);
         tail = (ranqi_msg_dn_tail_s *)buff[head_body_len];
-        if(tail->checksum != utils_checksum(buff, head_body_len + 4)) {
+        if(tail->checksum != U16_LITTLE_BIG(utils_checksum(buff, head_body_len + 4))) {
             return false;
         }
     }
@@ -705,7 +705,7 @@ static bool dn_set_interval_handler(set_interval_s *settings)
 
 static bool dn_set_time_handler(uint32_t ts)
 {
-	board_set_unix_tick(ts);
+	board_set_unix_tick(U32_BIG_LITTLE(ts));
     return true;
 }
 
@@ -1015,19 +1015,18 @@ float ranqi_read_sensor_data(uint8_t port, uint8_t loc, sensor_type_e type)
 {
     switch (loc) {
         case Ranqi_Sensor_Loc_Low:
-            break;
+            return (type == SENSOR_TEMP) ? 25 : 20;
 
         case Ranqi_Sensor_Loc_Mid:
-            // TODO
-            break;
+            return (type == SENSOR_TEMP) ? 25 : 20;
 
         case Ranqi_Sensor_Loc_High:
-            break;
+            return (type == SENSOR_TEMP) ? 25 : 20;
 
         default:
             break;
     }
-    return 1.25;
+    return 0;
 }
 
 static uint8_t sensor_data_alarm_check(float data, uint8_t port, uint8_t loc, sensor_type_e type)
@@ -1112,7 +1111,7 @@ static void sample_sensor_data(sensor_data_s *s_data)
 	s_data->press_data[Ranqi_Sensor_Loc_High][Ranqi_Port_1] =
 			ranqi_read_sensor_data(Ranqi_Port_1, Ranqi_Sensor_Loc_High, SENSOR_PRESS);
 #endif
-	s_data->ts = DS1302_Read_Unix_Tick();
+	s_data->ts = U32_LITTLE_BIG(DS1302_Read_Unix_Tick());
 }
 
 static void try_send_old_data(void)

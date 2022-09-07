@@ -22,7 +22,8 @@ extern "C" {
 #define Ctwing_Sub_Bit_Set(val)  val |= Ctwing_Sub_Bit
 #define Ctwing_Reg_Bit_Clr(val)  val &= ~Ctwing_Reg_Bit
 #define Ctwing_Sub_Bit_Clr(val)  val &= ~Ctwing_Sub_Bit
-#define Ctwing_Ready(val)        (val == (Ctwing_Reg_Bit | Ctwing_Sub_Bit))
+// #define Ctwing_Ready(val)        (val == (Ctwing_Reg_Bit | Ctwing_Sub_Bit))
+#define Ctwing_Ready(val)        (val & (Ctwing_Reg_Bit | Ctwing_Sub_Bit))
 
 typedef enum {
 	At_Dev_State_Init       = 0,

@@ -3,6 +3,7 @@
 #include "stdbool.h"
 #include "stddef.h"
 
+const uint8_t en_Key[RC4_KEY_LEN] = {'3', '0', '4', '0', 'Z', 'H', 'G', 'W'};
 
 /**RC4***/
 uint8_t Rc4Sbox[SBOX_LEN];
@@ -160,8 +161,6 @@ FF
 630f207c
  * */
 
-static const uint8_t en_Key[8] = {'3', '0', '4', '0', 'Z', 'H', 'G', 'W'};
-
 uint8_t en_bytes[] = {
 		0x03, 0x00, 0x11, 0x56, 0xA8, 0x0A,
 		0x05, 0x19, 0x04, 0x5E, 0xD1, 0x11, 0x10,
@@ -181,14 +180,14 @@ void rc4_test(void)
 {
 	uint32_t i;
 	uint8_t dbuf[200];
-	rc4_encrypt(en_Key, 8, de_bytes, sizeof(de_bytes));
+	rc4_encrypt(en_Key, RC4_KEY_LEN, de_bytes, sizeof(de_bytes));
 	printf("RC4: encrypt:  ");
 	for (i = 0; i < sizeof(de_bytes); i++) {
 		printf("%02x ", de_bytes[i]);
 	}
 	printf("\r\n");
 
-	rc4_decrypt(en_Key, 8, en_bytes, dbuf, sizeof(en_bytes));
+	rc4_decrypt(en_Key, RC4_KEY_LEN, en_bytes, dbuf, sizeof(en_bytes));
 	printf("RC4: decrypt:  ");
 	for (i = 0; i < sizeof(en_bytes); i++) {
 		printf("%02x ", dbuf[i]);
