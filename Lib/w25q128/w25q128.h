@@ -1,20 +1,45 @@
-#ifndef __W25Q128_H__
-#define __W25Q128_H__
+
+#ifndef __W25Q128_FLASH_H__
+#define __W25Q128_FLASH_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "main.h"
+#include "spi.h"
 #include "gpio.h"
+#include <stdint.h>
 
+/*
+ *  256B per Page;                             Count:  256*16*4096/256 = 16*4096 = 65536(0x10000)
+ *  4096 (0x1000) Bytes per Sector;            Count:  256*16
+ *  4096*16 = 65536(0x10000) Bytes per Block;  Count:  256
+ *
+ */
 extern SPI_HandleTypeDef hspi1;
 #define W25QXX_SPI_PTR   &hspi1
 
-#define INIT_DEBUG               0
-
+#if 0
+#define W25QFLASH_CS_SELECT      LL_GPIO_ResetOutputPin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin)
+#define W25QFLASH_CS_UNSELECT    LL_GPIO_SetOutputPin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin)
+#else
 #define W25QFLASH_CS_SELECT      HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, GPIO_PIN_RESET)
 #define W25QFLASH_CS_UNSELECT    HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, GPIO_PIN_SET)
+#endif
+
+#define W25QFLASH_PAGE_SIZE        256      // 0x100
+#define W25QFLASH_PAGE_COUNT       65536    // 0x10000
+#define W25QFLASH_SECTOR_SIZE      4096     // 0x1000
+#define W25QFLASH_SECTOR_COUNT     4096     // 0x1000
+#define W25QFLASH_BLOCK_SIZE       65536    // 0x10000
+#define W25QFLASH_BLOCK_COUNT      256      // 0x100
+
+#define Page_To_Sector(page_addr)  		((page_addr * W25QFLASH_PAGE_SIZE)/W25QFLASH_SECTOR_SIZE)
+#define Page_To_Block(page_addr)   		((page_addr * W25QFLASH_PAGE_SIZE)/W25QFLASH_BLOCK_SIZE)
+#define Sector_To_Block(sector_addr)    ((sector_addr * W25QFLASH_SECTOR_SIZE)/W25QFLASH_BLOCK_SIZE)
+#define Sector_To_Page(sector_addr)     ((sector_addr * W25QFLASH_SECTOR_SIZE)/W25QFLASH_PAGE_SIZE)
+#define Block_To_Page(block_addr)       ((block_addr * W25QFLASH_BLOCK_SIZE)/W25QFLASH_PAGE_SIZE)
 
 #define W25_WRITE_DISABLE     0x04
 #define W25_WRITE_ENABLE      0x06
@@ -44,60 +69,40 @@ typedef enum
 	W25Q128,
 	W25Q256,
 	W25Q512,
-	
+
 } W25QXX_ID_t;
 
 typedef struct
 {
 	W25QXX_ID_t	ID;
-	uint8_t		UniqID[8];
-	uint16_t	PageSize;
-	uint32_t	PageCount;
-	uint32_t	SectorSize;
-	uint32_t	SectorCount;
-	uint32_t	BlockSize;
-	uint32_t	BlockCount;
-	uint32_t	CapacityInKiloByte;
-	uint8_t		StatusRegister1;
-	uint8_t		StatusRegister2;
-	uint8_t		StatusRegister3;	
+//	uint8_t		UniqID[8];
+//	uint16_t	PageSize;
+//	uint32_t	PageCount;
+//	uint32_t	SectorSize;
+//	uint32_t	SectorCount;
+//	uint32_t	BlockSize;
+//	uint32_t	BlockCount;
+//	uint32_t	CapacityInKiloByte;
+//	uint8_t		StatusRegister1;
+//	uint8_t		StatusRegister2;
+//	uint8_t		StatusRegister3;
 	uint8_t		Lock;
-	
+
 }w25qxx_t;
 
 extern w25qxx_t	w25qxx;
 
-uint8_t	W25qxx_Init(void);
-
-void W25qxx_EraseChip(void);
-void W25qxx_EraseSector(uint32_t SectorAddr);
-void W25qxx_EraseBlock(uint32_t BlockAddr);
-
-uint32_t W25qxx_PageToSector(uint32_t PageAddress);
-uint32_t W25qxx_PageToBlock(uint32_t PageAddress);
-uint32_t W25qxx_SectorToBlock(uint32_t SectorAddress);
-uint32_t W25qxx_SectorToPage(uint32_t SectorAddress);
-uint32_t W25qxx_BlockToPage(uint32_t BlockAddress);
-
-uint8_t W25qxx_IsEmptyPage(uint32_t Page_Address, uint32_t OffsetInByte);
-uint8_t W25qxx_IsEmptySector(uint32_t Sector_Address, uint32_t OffsetInByte);
-uint8_t W25qxx_IsEmptyBlock(uint32_t Block_Address, uint32_t OffsetInByte);
-
-void W25qxx_WriteByte(uint8_t byte, uint32_t addr);
-void W25qxx_WritePage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t OffsetInByte, uint32_t NumByteToWrite_up_to_PageSize);
-void W25qxx_WriteSector(uint8_t *pBuffer, uint32_t Sector_Address, uint32_t OffsetInByte, uint32_t NumByteToWrite_up_to_SectorSize);
-void W25qxx_WriteBlock(uint8_t* pBuffer, uint32_t Block_Address, uint32_t OffsetInByte, uint32_t NumByteToWrite_up_to_BlockSize);
-
-void W25qxx_ReadByte(uint8_t *pBuffer, uint32_t Bytes_Address);
-void W25qxx_ReadBytes(uint8_t *pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
-void W25qxx_ReadPage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t OffsetInByte, uint32_t NumByteToRead_up_to_PageSize);
-void W25qxx_ReadSector(uint8_t *pBuffer, uint32_t Sector_Address, uint32_t OffsetInByte, uint32_t NumByteToRead_up_to_SectorSize);
-void W25qxx_ReadBlock(uint8_t *pBuffer, uint32_t Block_Address, uint32_t OffsetInByte,uint32_t NumByteToRead_up_to_BlockSize);
-
-uint8_t	W25qxx_Spi(uint8_t Data);
-// void W25qxx_test(void);
+extern uint8_t W25qxx_Init(void);
+extern void W25qxx_EraseSector(uint32_t SectorAddr);
+extern void W25qxx_EraseBlock(uint32_t BlockAddr);
+extern void W25qxx_WriteByte(uint8_t byte, uint32_t addr);
+extern void W25qxx_WritePage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t OffsetInByte, uint32_t NumByteToWrite_up_to_PageSize);
+extern void W25qxx_ReadByte(uint8_t *pBuffer, uint32_t Bytes_Address);
+extern void W25qxx_ReadBytes(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
+extern void W25qxx_ReadPage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t OffsetInByte, uint32_t NumByteToRead_up_to_PageSize);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ __W25Q128_H__ */
+
+#endif /* __W25Q128_FLASH_H__ */

@@ -148,6 +148,7 @@
 									<listOptionValue builtIn="false" value="../Lib/sim_i2c"/>
 									<listOptionValue builtIn="false" value="../Lib/w25q128"/>
 									<listOptionValue builtIn="false" value="../Lib/press_sensor"/>
+									<listOptionValue builtIn="false" value="../Lib/app_ota"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.186812413" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
