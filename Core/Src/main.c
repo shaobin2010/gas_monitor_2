@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "crc.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -98,20 +99,21 @@ int main(void)
   MX_SPI1_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   board_init();
 
  extern void mem_info(void);
 
- /*                              字节
+ /*                              ??
 	Total_mem:6000 freeMem:4752  4752
 	Total_mem:6000 freeMem:3296  3296
 	Total_mem:6000 freeMem:2384  2384
 
     Total_mem:6000 freeMem:2032  1880
 
-	                                字
+	                                ?
 	Ranqi_Tx_Task   X       3       122     2
 	IDLE            R       0       108     4
 	Ranqi_Rx_Task   B       4       107     3
@@ -129,7 +131,7 @@ int main(void)
   printf("Ranqi_Rx_Task  %d\r\n", ret);
   mem_info();
 
-  /* 启动调度器，任务开始执行 */
+  /* ???????????? */
   vTaskStartScheduler();
 
   /* USER CODE END 2 */
