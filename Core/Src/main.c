@@ -82,7 +82,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  BaseType_t ret;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -100,20 +99,24 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   MX_CRC_Init();
+
   /* USER CODE BEGIN 2 */
 
-  board_init();
+  BaseType_t ret;
+  board_init();  // 各种驱动初始化
+  // TODO        // 业务初始化
 
+  // 启动业务线程
  extern void mem_info(void);
 
- /*                              ??
+ /*                              字节
 	Total_mem:6000 freeMem:4752  4752
 	Total_mem:6000 freeMem:3296  3296
 	Total_mem:6000 freeMem:2384  2384
 
     Total_mem:6000 freeMem:2032  1880
 
-	                                ?
+	                                字
 	Ranqi_Tx_Task   X       3       122     2
 	IDLE            R       0       108     4
 	Ranqi_Rx_Task   B       4       107     3
@@ -131,7 +134,7 @@ int main(void)
   printf("Ranqi_Rx_Task  %d\r\n", ret);
   mem_info();
 
-  /* ???????????? */
+  /* 启动调度器，任务开始执行 */
   vTaskStartScheduler();
 
   /* USER CODE END 2 */

@@ -100,6 +100,8 @@ extern void W25qxx_WritePage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t O
 extern void W25qxx_ReadByte(uint8_t *pBuffer, uint32_t Bytes_Address);
 extern void W25qxx_ReadBytes(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
 extern void W25qxx_ReadPage(uint8_t *pBuffer, uint32_t Page_Address, uint32_t OffsetInByte, uint32_t NumByteToRead_up_to_PageSize);
+extern uint8_t W25qxx_IsEmptySector(uint32_t Sector_Address, uint32_t OffsetInByte);
+extern uint8_t W25qxx_IsEmptyBlock(uint32_t Block_Address, uint32_t OffsetInByte);
 
 #ifdef __cplusplus
 }

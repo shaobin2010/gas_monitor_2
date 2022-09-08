@@ -121,6 +121,7 @@ typedef struct {
 
 typedef struct {
     uint8_t device_port;        // 1 or 2 ports
+    uint8_t sensor_loc;         // 高/中/低压
     uint32_t server_ip;
     uint16_t server_port;
 

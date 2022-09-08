@@ -327,6 +327,7 @@ uint8_t W25qxx_IsEmptyPage(uint32_t Page_Address, uint32_t OffsetInByte)
 	w25qxx.Lock = 0;
 	return 1;
 }
+*/
 
 uint8_t W25qxx_IsEmptySector(uint32_t Sector_Address, uint32_t OffsetInByte)
 {
@@ -466,7 +467,7 @@ uint8_t W25qxx_IsEmptyBlock(uint32_t Block_Address, uint32_t OffsetInByte)
 	w25qxx.Lock = 0;
 	return 1;
 }
-*/
+
 
 void W25qxx_WriteByte(uint8_t byte, uint32_t addr)
 {
